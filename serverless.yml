@@ -1,0 +1,47 @@
+service: car-inventory
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource:
+        - { "Fn::GetAtt": ["CarsDynamoDBTable", "Arn" ] }
+  environment:
+    CARS_TABLE: { "Ref": "CarsDynamoDBTable" }
+
+functions:
+  saveCar:
+    handler: handler.saveCar
+    events:
+      - http:
+          path: inventory
+          method: post
+          cors: true
+  getCar:
+    handler: handler.getCar
+    events:
+      - http:
+          path: inventory
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    CarsDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: carName
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: carName
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
